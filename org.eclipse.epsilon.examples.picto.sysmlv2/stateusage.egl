@@ -1,0 +1,23 @@
+[%import "util.eol";%]
+[%
+Native("java.lang.System").setProperty("PLANTUML_ALLOW_JAVASCRIPT_IN_LINK", "true");
+%]
+@startuml
+
+[%for (state in su.getSubstates()){%]
+[%state.~id = loopCount;%]
+state "[%=state.name%]" as [%=state.getLabel()%] [[javascript:top.[%=state.getLink()%]]] {
+}
+[%}%]
+
+[%for (sua in su.getSuccessionAsUsages()){%]
+[%=sua.source.first().getLabel()%] --> [%=sua.target.first().getLabel()%]
+[%}%]
+
+@enduml
+
+[%
+operation Any getLink() {
+	return "showElement('" + self.id + "','" + self.eResource.uri + "')";
+}
+%]

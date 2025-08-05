@@ -1,0 +1,15 @@
+import "util.eol";
+
+rule Network2Graphviz
+    transform su : StateUsage {
+
+    guard: su.getSubstates().notEmpty()
+	
+    template : "stateusage.egl"
+	
+    parameters : Map{
+        "path" = Sequence{"States", su.name},
+        "format" = "puml"
+    }
+
+}

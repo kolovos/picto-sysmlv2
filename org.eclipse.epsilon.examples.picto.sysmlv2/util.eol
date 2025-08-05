@@ -1,0 +1,32 @@
+@cached
+operation Any getLabel() {
+	if (self.isStartState() or self.isEndState()) return "["+"*"+"]";
+	else return "State" + self.~id;
+}
+
+@cached
+operation Any isStartState() {
+	return self.name = "entryAction";
+}
+
+@cached
+operation Any isEndState() {
+	return self.name = "done";
+}
+
+@cached
+operation StateUsage getSubstates() {
+	return self.getSuccessionAsUsages().
+		collect(sau|Sequence{sau.source, sau.target}).flatten().asSet().
+		reject(e|e.isStartState() or e.isEndState());
+}
+
+@cached
+operation StateUsage getSuccessionAsUsages() {
+	return self.getAllContents().selectByType(SuccessionAsUsage);
+}
+
+@cached
+operation Any getAllContents() {
+	return self.eContents().includingAll(self.eContents().collect(c|c.getAllContents()).flatten());
+}
