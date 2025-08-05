@@ -15,4 +15,4 @@ This is a demonstration of using [Picto](https://eclipse.dev/epsilon/doc/picto/)
 - Open the Picto view through `Window -> Show View -> Other -> Picto`
 - Your Eclipse should look like this
 
-<img width="1644" height="1176" alt="image" src="https://github.com/user-attachments/assets/ad06cd4a-2863-4567-8aec-769a885ee3fa" />
+![2025-08-05 16 17 48](https://github.com/user-attachments/assets/4bd61626-7a1d-49b6-b275-74d1db5779c5)
