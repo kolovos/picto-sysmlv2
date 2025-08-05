@@ -1,6 +1,6 @@
 # Visualising SysML V2 Models with Picto
 
-This is a demonstration of using Picto to visualise SysML V2 models. To run this demo:
+This is a demonstration of using [Picto](https://eclipse.dev/epsilon/doc/picto/) to visualise SysML V2 models. To run this demo:
 
 - Install [Epsilon 2.8 or later](https://eclipse.dev/epsilon/download/#development-tools) on top of Eclipse
 - Add [SysML v2](https://github.com/Systems-Modeling/SysML-v2-Release/tree/master/install/eclipse) to your Eclipse Installation
