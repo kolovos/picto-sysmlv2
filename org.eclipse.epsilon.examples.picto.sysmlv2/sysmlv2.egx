@@ -9,7 +9,10 @@ rule Network2Graphviz
 	
     parameters : Map{
         "path" = Sequence{"States", su.name},
-        "format" = "puml"
+        "format" = "puml",
+        "layers" = Sequence {
+            Map {"id"="notes", "title"="Notes", "active"=true}
+        }
     }
 
 }

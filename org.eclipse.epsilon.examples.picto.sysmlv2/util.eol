@@ -30,3 +30,8 @@ operation StateUsage getSuccessionAsUsages() {
 operation Any getAllContents() {
 	return self.eContents().includingAll(self.eContents().collect(c|c.getAllContents()).flatten());
 }
+
+@cached
+operation StateUsage getDocumentation() {
+	return self.getAllContents().selectOne(c|c.isTypeOf(Documentation));
+}

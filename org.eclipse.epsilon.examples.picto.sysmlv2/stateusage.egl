@@ -8,6 +8,13 @@ Native("java.lang.System").setProperty("PLANTUML_ALLOW_JAVASCRIPT_IN_LINK", "tru
 [%state.~id = loopCount;%]
 state "[%=state.name%]" as [%=state.getLabel()%] [[javascript:top.[%=state.getLink()%]]] {
 }
+
+[%if(state.getDocumentation().isDefined() and isLayerActive("notes")){%]
+note right of [%=state.getLabel()%]
+[%=state.getDocumentation().body%]
+end note
+[%}%]
+
 [%}%]
 
 [%for (sua in su.getSuccessionAsUsages()){%]
@@ -19,5 +26,15 @@ state "[%=state.name%]" as [%=state.getLabel()%] [[javascript:top.[%=state.getLi
 [%
 operation Any getLink() {
 	return "showElement('" + self.id + "','" + self.eResource.uri + "')";
+}
+
+operation isLayerActive(id : String) {
+    var layer = layers.selectOne(l|l.id = id);
+    if (layer.isDefined()) {
+        return layer.active;
+    }
+    else {
+        return true;
+    }
 }
 %]
