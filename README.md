@@ -14,3 +14,5 @@ This is a demonstration of using Picto to visualise SysML V2 models. To run this
 - Open `model.sysml`
 - Open the Picto view through `Window -> Show View -> Other -> Picto`
 - Your Eclipse should look like this
+
+<img width="1644" height="1176" alt="image" src="https://github.com/user-attachments/assets/ad06cd4a-2863-4567-8aec-769a885ee3fa" />
