@@ -32,6 +32,55 @@ operation Any getAllContents() {
 }
 
 @cached
+operation Any getFirstContents() {
+	return self.eContents().collect(c|c.eContents()).flatten();
+}
+
+@cached
 operation StateUsage getDocumentation() {
 	return self.getAllContents().selectOne(c|c.isTypeOf(Documentation));
+}
+
+@cached
+operation Any getLink() {
+	return "showElement('" + self.id + "','" + self.eResource.uri + "')";
+}
+
+@cached
+operation PartUsage getMass() {
+    for (attr in self.getFirstContents().selectByType(AttributeUsage)) {
+        if (attr.name == "totalMass" or attr.name == "mass" or attr.name == "wetMass") {
+            for (oe in attr.getFirstContents().selectByType(OperatorExpression)) {
+                for (lv in oe.getAllContents().selectByType(LiteralRational)) {
+                    return lv.value;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+@cached
+operation PartUsage partToJson(depth : Integer) {
+	var json = "{";
+    json += "\"name\": \"" + self.name + "\",";
+    json += "\"mass\": " + self.getMass() + ",";
+    json += "\"link\": \"" + self.getLink() + "\",";
+    json += "\"depth\": " + depth + ",";
+        
+    var subParts = self.getFirstContents().selectByType(PartUsage);
+    if (subParts.isEmpty()) {
+        json += "\"children\": []";
+    } else {
+        json += "\"children\": [";
+        var first = true;
+        for (sp in subParts) {
+            if (first) { first = false; } else { json += ","; }
+            json += sp.partToJson(depth+1);
+        }
+        json += "]";
+    }
+    json += "}";
+    
+    return json;
 }

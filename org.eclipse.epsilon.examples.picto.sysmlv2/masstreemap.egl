@@ -1,0 +1,106 @@
+[%import "util.eol";%]
+
+[%
+/* Allow PlantUML JS links if needed */
+Native("java.lang.System").setProperty("PLANTUML_ALLOW_JAVASCRIPT_IN_LINK", "true");
+
+var rootPart = PartUsage.all.selectOne(p | p.name == "Comet Interceptor space segment (physical)");
+var allPartsJSON = rootPart.partToJson(0);
+allPartsJSON.println();
+%]
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Nested Treemap (SysMLv2)</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body { font-family: sans-serif; }
+    .node rect { stroke: #fff; }
+  </style>
+</head>
+<body>
+  <svg id="treemap"></svg>
+  <script>
+    const data = [%=allPartsJSON%];
+    const width = 1920;
+    const height = 1080;
+    const color = d3.scaleSequential([8, 0], d3.interpolateMagma);
+
+    // Treemap layout, size from mass or children
+    function treemap(data) {
+        return d3.treemap()
+        .size([width, height])
+        .paddingOuter(3)
+        .paddingTop(19)
+        .paddingInner(1)
+        .round(true)
+        (d3.hierarchy(data)
+            .sum(d => {
+            if (d.mass > 0) return d.mass;
+            if (d.children && d.children.length > 0) return 0; 
+            return 0.1; // minimum size for zero-mass leaves
+            })
+            .sort((a, b) => b.value - a.value));
+    }
+
+    const root = treemap(data);
+
+    const svg = d3.select("#treemap")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("viewBox", [0, 0, width, height])
+      .attr("style", "max-width: 100%; height: auto; overflow: visible; font: 10px sans-serif;");
+
+    const defs = svg.append("defs");
+
+    const shadow = defs.append("filter")
+        .attr("id", "shadow")
+      .append("feDropShadow")
+        .attr("flood-opacity", 0.3)
+        .attr("dx", 0)
+        .attr("stdDeviation", 3);
+
+    const node = svg.selectAll("g")
+      .data(root.descendants())
+      .join("g")
+        .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+    const format = d3.format(",.2f");
+
+    node.append("title")
+        .text(d => `${d.ancestors().reverse().map(d => d.data.name).join(" / ")}\nMass: ${format(d.value)}`);
+
+    node.append("rect")
+        .attr("id", d => (d.nodeUid = `node-${Math.random().toString(16).slice(2)}`))
+        .attr("fill", d => color(d.depth))
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0)
+        .on("click", (event, d) => {
+        	if(d.data.link) {
+        		eval(d.data.link);
+        	}
+        });
+
+    node.append("clipPath")
+        .attr("id", d => (d.clipUid = `clip-${Math.random().toString(16).slice(2)}`))
+      .append("use")
+        .attr("xlink:href", d => `#${d.nodeUid}`);
+
+    node.append("text")
+        .attr("clip-path", d => `url(#${d.clipUid})`)
+      .selectAll("tspan")
+      .data(d => {
+        // Show name for internal nodes, but keep leaves minimal
+        if (d.children) {
+          return [d.data.name];
+        } else {
+          return [""];
+        }
+      })
+      .join("tspan")
+        .attr("x", 3)
+        .attr("y", 13)
+        .text(d => d);
+  </script>

@@ -1,6 +1,6 @@
 import "util.eol";
 
-rule Network2Graphviz
+rule States2Graphviz
     transform su : StateUsage {
 
     guard: su.getSubstates().notEmpty()
@@ -15,4 +15,16 @@ rule Network2Graphviz
         }
     }
 
+}
+
+rule Model2TreeMap {
+	template : "masstreemap.egl"
+	
+	parameters : Map{
+		"path" = Sequence{"Mass tree-map"},
+		"format" = "html",
+		"layers" = Sequence {
+			Map {"id"="notes", "title"="Notes", "active"=true}
+		}
+	}
 }

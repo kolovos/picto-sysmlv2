@@ -24,10 +24,6 @@ end note
 @enduml
 
 [%
-operation Any getLink() {
-	return "showElement('" + self.id + "','" + self.eResource.uri + "')";
-}
-
 operation isLayerActive(id : String) {
     var layer = layers.selectOne(l|l.id = id);
     if (layer.isDefined()) {
