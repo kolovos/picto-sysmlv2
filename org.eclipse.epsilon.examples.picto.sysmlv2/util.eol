@@ -47,17 +47,46 @@ operation Any getLink() {
 }
 
 @cached
+operation AttributeUsage getTemp() {
+	var toReturn = null;
+
+	for (oe in self.getFirstContents().selectByType(OperatorExpression)) {
+		for (lv in oe.getAllContents().selectByType(LiteralInteger)) {
+			toReturn = lv.value;
+		}
+	}
+	
+    return toReturn.isDefined() ? toReturn : 0;
+}
+
+@cached
 operation PartUsage getMass() {
+	var toReturn = null;
     for (attr in self.getFirstContents().selectByType(AttributeUsage)) {
         if (attr.name == "totalMass" or attr.name == "mass") {
             for (oe in attr.getFirstContents().selectByType(OperatorExpression)) {
-                for (lv in oe.getAllContents().selectByType(LiteralRational)) {
-                    return lv.value;
-                }
-            }
+				for (lv in oe.getAllContents().selectByType(LiteralRational)) {
+					toReturn = lv.value;
+				}
+			}
         }
     }
-    return 0;
+    
+    return toReturn.isDefined() ? toReturn : 0;
+}
+
+@cached
+operation PartUsage getTemperatureBounds() {
+	var toReturn = "";
+	for (attr in self.getFirstContents().selectByType(AttributeUsage)) {
+        switch(attr.shortName) {
+    		case "MinOT" : toReturn += "\"minOT\": " + attr.getTemp()*-1 + ","; //just quick hack, assuming all min temperature are negative
+    		case "MinNOT" : toReturn += "\"minNOT\": " + attr.getTemp()*-1 + ","; 
+    		case "MaxOT" : toReturn += "\"maxOT\": " + attr.getTemp() + ",";
+    		case "MaxNOT" : toReturn += "\"maxNOT\": " + attr.getTemp() + ",";
+        } 
+    }
+    return toReturn;
 }
 
 @cached
@@ -65,6 +94,7 @@ operation PartUsage partToJson(depth : Integer) {
 	var json = "{";
     json += "\"name\": \"" + self.name + "\",";
     json += "\"mass\": " + self.getMass() + ",";
+    json += self.getTemperatureBounds();
     json += "\"link\": \"" + self.getLink() + "\",";
     json += "\"depth\": " + depth + ",";
         

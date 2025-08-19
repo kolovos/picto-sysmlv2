@@ -20,31 +20,60 @@ var allPartsJSON = rootPart.partToJson(0);
   </style>
 </head>
 <body>
+    <div class="controls">
+        <label for="temperature">Temperature: </label>
+        <input type="range" id="temperature" min="-200" max="200" value="20" step="1">
+        <span id="tempValue">20</span> °C
+        <br>
+        <label><input type="radio" name="mode" value="None" checked> Do not show temperature information</label>
+        <label><input type="radio" name="mode" value="OT"> Operational</label>
+        <label><input type="radio" name="mode" value="NOT"> Non-Operational</label>
+        <br>
+        <label for="tileselect">Tiling method: </label>
+            <select id="tileselect">
+            <option value="binary" selected>binary</option>
+            <option value="squarify">squarify</option>
+            <option value="slice-dice">slice-dice</option>
+            <option value="slice">slice</option>
+            <option value="dice">dice</option>
+        </select>
+    </div>
+
   <svg id="treemap"></svg>
   <script>
-    const data = [%=allPartsJSON%];
     const width = 1920;
     const height = 1080;
     const color = d3.scaleSequential([8, 0], d3.interpolateMagma);
+    const data = [%=allPartsJSON%];
 
-    // Treemap layout, size from mass or children
-    function treemap(data) {
-        return d3.treemap()
+    const tilingMethods = {
+      "binary": d3.treemapBinary,
+      "squarify": d3.treemapSquarify,
+      "slice-dice": d3.treemapSliceDice,
+      "slice": d3.treemapSlice,
+      "dice": d3.treemapDice
+    };
+
+    function currentTile() {
+      return tilingMethods[document.getElementById("tileselect").value];        
+    }
+
+    function computeRoot() {
+      return d3.treemap()
         .size([width, height])
         .paddingOuter(3)
         .paddingTop(19)
         .paddingInner(1)
         .round(true)
-        (d3.hierarchy(data)
-            .sum(d => {
-            if (d.mass > 0) return d.mass;
-            if (d.children && d.children.length > 0) return 0; 
-            return 0.1; // minimum size for zero-mass leaves
-            })
-            .sort((a, b) => b.value - a.value));
+        .tile(currentTile())
+      (d3.hierarchy(data)
+        .sum(d => {
+          if (d.mass > 0) return d.mass;
+          if (d.children && d.children.length > 0) return 0; 
+          return 0.1; // minimum size for zero-mass leaves
+        })
+        .sort((a, b) => b.value - a.value));
     }
-
-    const root = treemap(data);
 
     const svg = d3.select("#treemap")
       .attr("width", width)
@@ -53,53 +82,90 @@ var allPartsJSON = rootPart.partToJson(0);
       .attr("style", "max-width: 100%; height: auto; overflow: visible; font: 10px sans-serif;");
 
     const defs = svg.append("defs");
-
-    const shadow = defs.append("filter")
-        .attr("id", "shadow")
+    defs.append("filter")
+      .attr("id", "shadow")
       .append("feDropShadow")
-        .attr("flood-opacity", 0.3)
-        .attr("dx", 0)
-        .attr("stdDeviation", 3);
-
-    const node = svg.selectAll("g")
-      .data(root.descendants())
-      .join("g")
-        .attr("transform", d => `translate(${d.x0},${d.y0})`);
+      .attr("flood-opacity", 0.3)
+      .attr("dx", 0)
+      .attr("stdDeviation", 3);
 
     const format = d3.format(",.2f");
 
-    node.append("title")
+    function isWithinTemp(d, temp, mode) {
+      if (mode === "OT") {
+        return temp >= d.data.minOT && temp <= d.data.maxOT;
+      } else {
+        return temp >= d.data.minNOT && temp <= d.data.maxNOT;
+      }
+    }
+
+    function renderTreemap(root) {
+      const temp = +document.getElementById("temperature").value;
+      const mode = document.querySelector("input[name=mode]:checked").value;
+
+      const node = svg.selectAll("g")
+        .data(root.descendants(), d => d.data.name)
+        .join("g")
+          .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+      node.selectAll("title").remove();
+      node.append("title")
         .text(d => `${d.ancestors().reverse().map(d => d.data.name).join(" / ")}\nMass: ${format(d.value)}`);
 
-    node.append("rect")
+      node.selectAll("rect").remove();
+      node.append("rect")
         .attr("id", d => (d.nodeUid = `node-${Math.random().toString(16).slice(2)}`))
-        .attr("fill", d => color(d.depth))
+        .attr("fill", d => {
+            if (mode != "None" && !d.children && "minNOT" in d.data) {
+                return isWithinTemp(d, temp, mode) ? "green" : "red";
+            } else {
+                return color(d.depth);
+            }
+        })
         .attr("width", d => d.x1 - d.x0)
         .attr("height", d => d.y1 - d.y0)
         .on("click", (event, d) => {
-        	if(d.data.link) {
-        		eval(d.data.link);
-        	}
+          if(d.data.link) {
+            eval(d.data.link);
+          }
         });
 
-    node.append("clipPath")
+      node.selectAll("clipPath").remove();
+      node.append("clipPath")
         .attr("id", d => (d.clipUid = `clip-${Math.random().toString(16).slice(2)}`))
-      .append("use")
+        .append("use")
         .attr("xlink:href", d => `#${d.nodeUid}`);
 
-    node.append("text")
+      node.selectAll("text").remove();
+      node.append("text")
         .attr("clip-path", d => `url(#${d.clipUid})`)
-      .selectAll("tspan")
-      .data(d => {
-        // Show name for internal nodes, but keep leaves minimal
-        if (d.children) {
-          return [d.data.name];
-        } else {
-          return [""];
-        }
-      })
-      .join("tspan")
-        .attr("x", 3)
-        .attr("y", 13)
-        .text(d => d);
+        .selectAll("tspan")
+        .data(d => (d.children ? [d.data.name] : [""]))
+        .join("tspan")
+          .attr("x", 3)
+          .attr("y", 13)
+          .text(d => d);
+    }
+
+    // Initial render
+    let root = computeRoot();
+    renderTreemap(root);
+
+    // --- EVENT LISTENERS ---
+    document.getElementById('temperature').addEventListener('input', (event) => {
+        document.getElementById('tempValue').textContent = event.target.value;
+        renderTreemap(root);
+    });
+
+    document.querySelectorAll('input[name=mode]').forEach(r => {
+        r.addEventListener('change', () => {
+            renderTreemap(root);
+        });
+    });
+
+    document.getElementById("tileselect").addEventListener("change", () => {
+        root = computeRoot();
+        renderTreemap(root);
+    });
+
   </script>
