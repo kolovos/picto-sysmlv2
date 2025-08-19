@@ -6,7 +6,6 @@ Native("java.lang.System").setProperty("PLANTUML_ALLOW_JAVASCRIPT_IN_LINK", "tru
 
 var rootPart = PartUsage.all.selectOne(p | p.name == "Comet Interceptor space segment (physical)");
 var allPartsJSON = rootPart.partToJson(0);
-allPartsJSON.println();
 %]
 
 <!DOCTYPE html>

@@ -49,7 +49,7 @@ operation Any getLink() {
 @cached
 operation PartUsage getMass() {
     for (attr in self.getFirstContents().selectByType(AttributeUsage)) {
-        if (attr.name == "totalMass" or attr.name == "mass" or attr.name == "wetMass") {
+        if (attr.name == "totalMass" or attr.name == "mass") {
             for (oe in attr.getFirstContents().selectByType(OperatorExpression)) {
                 for (lv in oe.getAllContents().selectByType(LiteralRational)) {
                     return lv.value;
